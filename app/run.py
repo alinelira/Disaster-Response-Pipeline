@@ -1,9 +1,15 @@
 import json
 import plotly
 import pandas as pd
+import re
+import nltk
 
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+nltk.download(['punkt','wordnet','averaged_perceptron_tagger','stopwords'])
+
+from sklearn.base import BaseEstimator, TransformerMixin
 
 from flask import Flask
 from flask import render_template, request, jsonify
@@ -15,22 +21,45 @@ from sqlalchemy import create_engine
 app = Flask(__name__)
 
 def tokenize(text):
-    tokens = word_tokenize(text)
+    text = re.sub(r"[^a-zA-Z0-9]"," ", text)
+    
+    words = word_tokenize(text)
+    words = [w for w in words if w not in stopwords.words("english")]
+    
     lemmatizer = WordNetLemmatizer()
+    clean_words = []
+    for w in words:
+        clean_w = lemmatizer.lemmatize(w).lower().strip()
+        clean_words.append(clean_w)
+        
+    return clean_words
 
-    clean_tokens = []
-    for tok in tokens:
-        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
+class StartingVerbExtractor(BaseEstimator, TransformerMixin):
 
-    return clean_tokens
+    def starting_verb(self, text):
+        
+        text = re.sub(r"[^a-zA-Z0-9]"," ", text)
+        sentence_list = nltk.sent_tokenize(text)
+        for sentence in sentence_list:
+            pos_tags = nltk.pos_tag(tokenize(sentence))
+            first_word, first_tag = pos_tags[0]
+            if first_tag in ['VB', 'VBP'] or first_word == 'RT':
+                return True
+        return False
+
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, X):
+        X_tagged = pd.Series(X).apply(self.starting_verb)
+        return pd.DataFrame(X_tagged)
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/DisasterResponse.db')
+df = pd.read_sql_table('CleanData', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -39,14 +68,18 @@ model = joblib.load("../models/your_model_name.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+    top_classification_count = df.iloc[:,4:].sum().sort_values(ascending=False).head(5)
+    top_classification_names = list(top_classification_count.index)
+    
+    bottom_classification_count = df.iloc[:,4:].sum().sort_values(ascending=False).tail(5)
+    bottom_classification_names = list(bottom_classification_count.index)
+    
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
-        {
+         {
             'data': [
                 Bar(
                     x=genre_names,
@@ -63,9 +96,44 @@ def index():
                     'title': "Genre"
                 }
             }
+        },
+        {
+            'data': [
+                Bar(
+                    y=top_classification_count,
+                    x=top_classification_names
+                )
+            ],
+
+            'layout': {
+                'title': 'Top 5 Message Classifications',
+                'yaxis': {
+                    'title': "Count of Messages"
+                },
+                'xaxis': {
+                    'title': "Classification"
+                }
+            }
+        },
+         {
+            'data': [
+                Bar(
+                    y=bottom_classification_count,
+                    x=bottom_classification_names
+                )
+            ],
+
+            'layout': {
+                'title': 'Bottom 5 Message Classifications',
+                'yaxis': {
+                    'title': "Count of Messages"
+                },
+                'xaxis': {
+                    'title': "Classification"
+                }
+            }
         }
     ]
-    
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
@@ -93,7 +161,7 @@ def go():
 
 
 def main():
-    app.run(host='0.0.0.0', port=3001, debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)
 
 
 if __name__ == '__main__':
