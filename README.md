@@ -5,22 +5,24 @@ The purpose of this project is to analyse disaster data from [Appen](https://app
 
 ## Files Description
 
-•	App folder contains the following files:
+•	App folder:
 
     1. 	Templates folder
     2.	run.py for the web application
     
-•	Data folder contains the following files:
+•	Data folder:
 
     1.	DisasterResponse.db
     2.	disaster_categories.csv
     3.	disaster_messages.csv
-    4.	process_data.py
+    4.	process_data.py (ETL Pipeline)
+    5.  ETL Pipeline Preparation (ETL Preparation code)
     
-•	Models folder contains the following files:
+•	Models folder:
 
     1.	classifier.pkl
     2.	train_classifier.py (Machine Learning Pipeline)
+    3.	ML Pipeline Preparation.ipynb (ML Preparation code)
     
 •	README file
 
