@@ -24,6 +24,19 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 def load_data(database_filepath):
     
+    """ 
+    Load dataset from database and define feature and target variables X and Y
+    
+    Args: 
+        database_filepath     path of database where dataset is saved
+        
+    Return: 
+        X                     feature variable (message)
+        Y                     target variable (36 categories)
+        category_names        names of the 36 categories
+    
+    """
+    
     engine = create_engine('sqlite:///'+database_filepath)
     df = pd.read_sql_table('CleanData',engine)  
     #Defining feature and target variables X and Y
@@ -37,10 +50,13 @@ def load_data(database_filepath):
 def tokenize(text):
         
     """ 
-    Transform text into clean tokens
+    Transform text into clean tokens (words)
     
-    Args: original text
-    Return: clean tokens (words)
+    Args: 
+        text            original text
+        
+    Return: 
+        clean_words     tokenized text
     
     """
     
@@ -62,6 +78,16 @@ class StartingVerbExtractor(BaseEstimator, TransformerMixin):
 
     def starting_verb(self, text):
         
+        """ 
+        Check if text starts with verb or not
+    
+        Args:
+            text               Original text
+        
+        Return:
+            True or False      True: text starts with verb   False: text does not start with verb
+        """
+    
         text = re.sub(r"[^a-zA-Z0-9]"," ", text)
         sentence_list = nltk.sent_tokenize(text)
         for sentence in sentence_list:
@@ -79,6 +105,9 @@ class StartingVerbExtractor(BaseEstimator, TransformerMixin):
         return pd.DataFrame(X_tagged)
     
 def build_model():
+    
+    """ Build pipeline to train classification model 
+    """
     
     model = Pipeline([
         ('features',FeatureUnion([
@@ -100,6 +129,17 @@ def build_model():
 
 def evaluate_model(model, X_test, Y_test, category_names):
     
+    """ 
+    Evaluate the model and print the f1 score, precision and recall for each category 
+    
+    Args: 
+         model              trained classification model
+         X_test             X test dataset
+         Y_test             Y test dataset
+         category_names     names of the 36 categories
+    
+    """
+    
     y_pred = model.predict(X_test)
 
     for i in range(len(category_names)):
@@ -108,6 +148,16 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    
+    """ 
+    Save model into pickle format
+    
+    Args: 
+        model               trained model to be saved
+        model_filepath      path where the model will be saved
+    
+    """
+    
     
     pickle.dump(model, open('models/classifier.pkl', 'wb'))
 

@@ -5,6 +5,19 @@ from sqlalchemy import create_engine
 
 
 def load_data(messages_filepath, categories_filepath):
+    
+    """
+    Load data from 2 csv files and merge into a single dataframe
+    
+    Args:
+    messages_filepath       path to messages csv file
+    categories_filepath     path to categories csv file
+    
+    Return:
+    df                      merged dataframe (categories + messages)     
+    
+    """
+    
     # loading messages dataset
     messages = pd.read_csv(messages_filepath)
     # loading categories dataset                       
@@ -15,17 +28,29 @@ def load_data(messages_filepath, categories_filepath):
     return df
 
 def clean_data(df):
-    # creating a dataframe of the 36 individual category columns
+    
+    """
+    Transform and clean merged dataframe (categories + messages)    
+    
+    Args:
+    df                      original merged dataframe (categories + messages)    
+    
+    Return:
+    df                      cleaned dataframe   
+    
+    """
+    
+    # Creating a dataframe of the 36 individual category columns
     categories = df['categories'].str.split(';',expand=True)
                            
-    # selecting the first row of the categories dataframe to extract a list of new column names for categories
+    # Delecting the first row of the categories dataframe to extract a list of new column names for categories
     row = categories.iloc[0]
     category_colnames = row.apply(lambda x: x[:-2])
                            
-    # renaming the columns of `categories`
+    # Renaming the columns of `categories`
     categories.columns = category_colnames
                            
-    #Converting category values to just numbers 0 or 1                     
+    # Converting category values to just numbers 0 or 1                     
     for column in categories:
     # set each value to be the last character of the string
         categories[column] = categories[column].apply(lambda x: x[-1])
@@ -39,20 +64,27 @@ def clean_data(df):
     # Dropping the original categories column from `df`
     df.drop('categories', axis=1, inplace=True)
                            
-     # Concatenating the original dataframe with the new `categories` dataframe
+    # Concatenating the original dataframe with the new `categories` dataframe
     df = pd.concat([df,categories], axis=1, join = 'inner')
                            
-     # Dropping duplicates                    
+    # Dropping duplicates                    
     df.drop_duplicates(inplace=True)
                            
     return df
-                               
-                           
-
-                           
-
-
+                                                        
+    
 def save_data(df, database_filename):
+    
+    """
+    Save dataframe to a sqlite database
+    
+    Args:
+    df                      original pandas dataframe
+    database_filename       sqlite database name                        
+    
+    """
+    
+    
     engine = create_engine('sqlite:///'+database_filename)
     df.to_sql('CleanData', engine, index=False, if_exists='replace') 
 
