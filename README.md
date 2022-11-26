@@ -10,8 +10,11 @@
 ## Project Overview <a name="overview"></a>
 The purpose of this project is to analyse real disaster data from [Appen](https://appen.com/) and build a machine learning pipeline, that uses NLTK and scikit-learn,  to output a model that classify messages sent during disasters into 36 categories (e.g. Medical Help, Medical Products, Offer, etc). 
 
-There is also a web app that receives new messages as input and displays classification results in 36 predefined categories.
+The output of this model can be used by disaster responses organisations to filter and pull out the messages that are most relevant during disasters.
+
+There is also a web app that receives new messages as input and displays classification results in 36 predefined categories. 
 Below are some screenshots of the web app.
+
 ![image](https://user-images.githubusercontent.com/48845915/203915009-87df6ba6-1db1-40f6-a0f4-48a3c5389c07.png)
 ![image](https://user-images.githubusercontent.com/48845915/203915088-be4f19c8-1844-428e-b346-ab4ce1de1780.png)
 
